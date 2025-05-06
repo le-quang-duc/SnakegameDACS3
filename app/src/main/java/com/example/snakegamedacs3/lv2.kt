@@ -1,9 +1,10 @@
 package com.example.snakegamedacs3
 
+import androidx.compose.ui.res.painterResource
 import android.content.Context
-import android.media.Image
-import androidx.activity.compose.ReportDrawn
+
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
+import androidx.compose.ui.graphics.painter.Painter
 
 @Composable
 fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
@@ -57,7 +59,8 @@ fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
         "bottom_left" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomleft),
         "bottom_right" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomright)
     )
-    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.apple)
+    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.food)
+
 
 
 
@@ -92,11 +95,11 @@ fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
             listOf(newHead) + snake.dropLast(1)
         }
     }
-
+    val background: Painter = painterResource(id = R.drawable.background_sceran)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010))
+            .background(Color(	0xFF003300))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -111,6 +114,11 @@ fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
                 .fillMaxWidth()
                 .border(4.dp, Color.White)
         ) {
+            Image(
+                painter = background,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val cellWidth = (size.width / columns).toInt()
                 val cellHeight = (size.height / rows).toInt()

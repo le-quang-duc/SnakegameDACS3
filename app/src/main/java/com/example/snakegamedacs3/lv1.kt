@@ -1,8 +1,6 @@
 package com.example.snakegamedacs3
 
 import androidx.compose.ui.res.painterResource
-
-import com.example.snakegamedacs3.generateFood
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.foundation.Canvas
@@ -16,19 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.painter.Painter
-
-
-
-
 
 @Composable
 fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
@@ -69,7 +61,7 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
         "bottom_left" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomleft),
         "bottom_right" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomright)
     )
-    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.apple)
+    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.food)
 
     LaunchedEffect(snake, gameOver) {
         if (gameOver) return@LaunchedEffect
@@ -112,7 +104,7 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010))
+            .background(Color(	0xFF003300))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     )

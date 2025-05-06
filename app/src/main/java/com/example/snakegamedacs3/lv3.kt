@@ -1,9 +1,8 @@
 package com.example.snakegamedacs3
 
 import android.content.Context
-import android.media.Image
-import androidx.activity.compose.ReportDrawn
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -13,7 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -57,23 +58,23 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
         "bottom_left" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomleft),
         "bottom_right" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomright)
     )
-    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.apple)
-//    val boomImage = ImageBitmap.imageResource(context.resources, R.drawable.boom)
+    val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.food)
+    val eagle = ImageBitmap.imageResource(context.resources, R.drawable.eagle)
 
-    var boom by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var eagle by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     LaunchedEffect(Unit) {
         while (true) {
             if (!gameOver) {
-                boom = Pair(Random.nextInt(columns), Random.nextInt(rows))
+                eagle = Pair(Random.nextInt(columns), Random.nextInt(rows))
                 delay(3000L)
-                boom = null
+                eagle = null
                 delay(3000L)
             } else {
                 delay(1000L)
             }
         }
-    }
+//    }
 
     LaunchedEffect(snake, gameOver) {
         if (gameOver) return@LaunchedEffect
@@ -96,7 +97,7 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
             return@LaunchedEffect
         }
 
-        if (boom != null && newHead == boom) {
+        if (eagle != null && snake == eagle) {
             gameOver = true
             if (score > highScore) {
                 highScore = score
@@ -113,11 +114,11 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
             listOf(newHead) + snake.dropLast(1)
         }
     }
-
+    val background: Painter = painterResource(id = R.drawable.background_sceran)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010))
+            .background(Color(	0xFF003300))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -132,6 +133,11 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
                 .fillMaxWidth()
                 .border(4.dp, Color.White)
         ) {
+            Image(
+                painter = background,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val cellWidth = (size.width / columns).toInt()
                 val cellHeight = (size.height / rows).toInt()
