@@ -40,10 +40,10 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
         Direction.LEFT to ImageBitmap.imageResource(context.resources, R.drawable.head_left),
         Direction.RIGHT to ImageBitmap.imageResource(context.resources, R.drawable.head_right)
     )
-    val headUp = ImageBitmap.imageResource(context.resources,R.drawable.head_up)
-    val headRight = ImageBitmap.imageResource(context.resources,R.drawable.head_right)
-    val headLeft = ImageBitmap.imageResource(context.resources,R.drawable.head_left)
-    val headDown = ImageBitmap.imageResource(context.resources,R.drawable.head_down)
+//    val headUp = ImageBitmap.imageResource(context.resources,R.drawable.head_up)
+//    val headRight = ImageBitmap.imageResource(context.resources,R.drawable.head_right)
+//    val headLeft = ImageBitmap.imageResource(context.resources,R.drawable.head_left)
+//    val headDown = ImageBitmap.imageResource(context.resources,R.drawable.head_down)
     val tailImages = mapOf(
         Direction.UP to ImageBitmap.imageResource(context.resources, R.drawable.tail_up),
         Direction.DOWN to ImageBitmap.imageResource(context.resources, R.drawable.tail_down),
@@ -59,23 +59,11 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
         "bottom_right" to ImageBitmap.imageResource(context.resources, R.drawable.body_bottomright)
     )
     val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.food)
-    val eagle = ImageBitmap.imageResource(context.resources, R.drawable.eagle)
+    val eagleImage = ImageBitmap.imageResource(context.resources, R.drawable.eagle)
 
-    var eagle by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (!gameOver) {
-                eagle = Pair(Random.nextInt(columns), Random.nextInt(rows))
-                delay(3000L)
-                eagle = null
-                delay(3000L)
-            } else {
-                delay(1000L)
-            }
-        }
-//    }
-
+    var eaglePosition by remember { mutableStateOf<Pair<Float, Float>?>(null) }
+    var eagleDirection by remember { mutableStateOf<Pair<Float, Float>?>(null) }
+    var eagleTimer by remember { mutableStateOf(0L) }
     LaunchedEffect(snake, gameOver) {
         if (gameOver) return@LaunchedEffect
         delay(200L)
@@ -97,14 +85,7 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
             return@LaunchedEffect
         }
 
-        if (eagle != null && snake == eagle) {
-            gameOver = true
-            if (score > highScore) {
-                highScore = score
-                prefs.edit().putInt("high_$level", highScore).apply()
-            }
-            return@LaunchedEffect
-        }
+
 
         snake = if (newHead == food) {
             food = Pair(Random.nextInt(columns), Random.nextInt(rows))
@@ -114,6 +95,53 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
             listOf(newHead) + snake.dropLast(1)
         }
     }
+    fun spawnEagle(rows: Int, columns: Int): Pair<Pair<Float, Float>, Pair<Float, Float>> {
+        return when (Random.nextInt(4)) {
+            0 -> Pair(Pair(0f, Random.nextInt(rows).toFloat()), Pair(1f, 0f))
+            1 -> Pair(Pair((columns - 1).toFloat(), Random.nextInt(rows).toFloat()), Pair(-1f, 0f))
+            2 -> Pair(Pair(Random.nextInt(columns).toFloat(), 0f), Pair(0f, 1f))
+            else -> Pair(Pair(Random.nextInt(columns).toFloat(), (rows - 1).toFloat()), Pair(0f, -1f))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (!gameOver) {
+            val (startPos, direction) = spawnEagle(rows, columns)
+            eaglePosition = startPos
+            eagleDirection = direction
+
+
+            var steps = 0
+            while (steps < 60 && !gameOver) {
+                delay(50L)
+                eaglePosition = eaglePosition?.let { pos ->
+                    eagleDirection?.let { dir ->
+                        val newX = pos.first + dir.first * 0.3f
+                        val newY = pos.second + dir.second * 0.3f
+                        if (newX < 0 || newX >= columns || newY < 0 || newY >= rows) {
+                            null
+                        } else {
+                            Pair(newX, newY)
+                        }
+                    }
+                }
+
+                val eagleCell = eaglePosition?.let { Pair(it.first.toInt(), it.second.toInt()) }
+                if (eagleCell != null && snake.contains(eagleCell)) {
+                    gameOver = true
+                    break
+                }
+
+                if (eaglePosition == null) break
+                steps++
+            }
+
+            eaglePosition = null
+            eagleDirection = null
+            delay(3000L)
+        }
+    }
+
+
     val background: Painter = painterResource(id = R.drawable.background_sceran)
     Column(
         modifier = Modifier
@@ -139,6 +167,7 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
                 modifier = Modifier.fillMaxSize()
             )
             Canvas(modifier = Modifier.fillMaxSize()) {
+
                 val cellWidth = (size.width / columns).toInt()
                 val cellHeight = (size.height / rows).toInt()
 
@@ -152,26 +181,19 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
                             val dx = next?.first?.minus(x) ?: 0
                             val dy = next?.second?.minus(y) ?: 0
 
-                            val headImages = when {
-                                dx==  1 -> headLeft
-                                dx== -1 ->headRight
-                                dy==  1  -> headUp
-                                dy== -1 -> headDown
-                                dx == 1 && dy == -1 -> bodyTurnImages["bottom_left"]
-                                dx == -1 && dy == -1 -> bodyTurnImages["top_left"]
-                                dx == 1 && dy == 1 -> bodyTurnImages["bottom_right"]
-                                dx == -1 && dy == 1 -> bodyTurnImages["top_right"]
-                                else -> headImages[direction]!!
+                            val inferredDirection = when {
+                                dx == 1 -> Direction.LEFT
+                                dx == -1 -> Direction.RIGHT
+                                dy == 1 -> Direction.UP
+                                dy == -1 -> Direction.DOWN
+                                else -> direction
                             }
-
-                            if (headImages != null) {
-
-                                drawImage(
-                                    image = headImages,
-                                    dstOffset = offset,
-                                    dstSize = size
-                                )
-                            }
+                            val headImage = headImages[inferredDirection] ?: headImages[Direction.RIGHT]!!
+                            drawImage(
+                                image = headImage,
+                                dstOffset = offset,
+                                dstSize = size
+                            )
                         }
 
 
@@ -227,7 +249,27 @@ fun lv3(level: String, onBackToHome: () -> Unit, context: Context) {
                     dstOffset = foodOffset,
                     dstSize = IntSize(cellWidth, cellHeight)
                 )
-            }
+                eaglePosition?.let { pos ->
+                    val eagleOffset = IntOffset(
+                        (pos.first * cellWidth.toFloat()).toInt(),
+                        (pos.second * cellHeight.toFloat()).toInt()
+                    )
+
+                    drawImage(
+                        image = eagleImage,
+                        dstOffset = IntOffset(
+                            (pos.first * cellWidth).toInt(),
+                            (pos.second * cellHeight).toInt()
+                        ),
+                        dstSize = IntSize(
+                            (cellWidth * 2).toInt(),
+                            (cellHeight * 2).toInt()
+                        )
+                    )
+                }
+
+                }
+
 
 
             if (gameOver) {

@@ -21,7 +21,6 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.painter.Painter
-
 @Composable
 fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
     val rows = 20
@@ -29,11 +28,11 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
     var snake by remember { mutableStateOf(listOf(Pair(10, 10), Pair(9, 10), Pair(8, 10))) }
     var direction by remember { mutableStateOf(Direction.RIGHT) }
     var food by remember { mutableStateOf(generateFood(snake, rows, columns)) }
-    var score by remember { mutableStateOf(0) }
     var gameOver by remember { mutableStateOf(false) }
-
+    var score by remember { mutableStateOf(0) }
     val prefs = context.getSharedPreferences("high_scores", Context.MODE_PRIVATE)
     var highScore by remember { mutableStateOf(prefs.getInt("high_$level", 0)) }
+
 
 
     val headImages = mapOf(
@@ -48,10 +47,11 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
         Direction.LEFT to ImageBitmap.imageResource(context.resources, R.drawable.tail_left),
         Direction.RIGHT to ImageBitmap.imageResource(context.resources, R.drawable.tail_right)
     )
-    val headUp = ImageBitmap.imageResource(context.resources,R.drawable.head_up)
-    val headRight = ImageBitmap.imageResource(context.resources,R.drawable.head_right)
-    val headLeft = ImageBitmap.imageResource(context.resources,R.drawable.head_left)
-    val headDown = ImageBitmap.imageResource(context.resources,R.drawable.head_down)
+
+//    val headUp = ImageBitmap.imageResource(context.resources,R.drawable.head_up)
+//    val headRight = ImageBitmap.imageResource(context.resources,R.drawable.head_right)
+//    val headLeft = ImageBitmap.imageResource(context.resources,R.drawable.head_left)
+//    val headDown = ImageBitmap.imageResource(context.resources,R.drawable.head_down)
 
     val bodyHorizontal = ImageBitmap.imageResource(context.resources, R.drawable.body_horizontal)
     val bodyVertical = ImageBitmap.imageResource(context.resources, R.drawable.body_vertical    )
@@ -63,12 +63,25 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
     )
     val foodImage = ImageBitmap.imageResource(context.resources, R.drawable.food)
 
+    val eatSound = remember {
+        MediaPlayer.create(context, R.raw.eat).apply {
+            setOnCompletionListener {
+                seekTo(0)
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            eatSound.release()
+        }
+    }
+
     LaunchedEffect(snake, gameOver) {
         if (gameOver) return@LaunchedEffect
         delay(200L)
-
         val head = snake.first()
         val newHead = when (direction) {
+
             Direction.UP -> Pair(head.first, (head.second - 1 + rows) % rows)
             Direction.DOWN -> Pair(head.first, (head.second + 1) % rows)
             Direction.LEFT -> Pair((head.first - 1 + columns) % columns, head.second)
@@ -84,11 +97,7 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
         }
 
         snake = if (newHead == food) {
-
-            val mediaPlayer = MediaPlayer.create(context, R.raw.eat)
-
-            mediaPlayer.start()
-
+            eatSound.start()
             food = generateFood(snake, rows, columns)
             score += 10
             listOf(newHead) + snake
@@ -129,7 +138,6 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val cellWidth = (size.width / columns).toInt()
                 val cellHeight = (size.height / rows).toInt()
-
                 snake.forEachIndexed { index, (x, y) ->
                     val offset = IntOffset(x * cellWidth, y * cellHeight)
                     val size = IntSize(cellWidth, cellHeight)
@@ -140,30 +148,21 @@ fun lv1(level: String, onBackToHome: () -> Unit, context: Context) {
                             val dx = next?.first?.minus(x) ?: 0
                             val dy = next?.second?.minus(y) ?: 0
 
-                            val headImages = when {
-                                dx==  1 -> headLeft
-                                dx== -1 ->headRight
-                                dy==  1  -> headUp
-                                dy== -1 -> headDown
-                                dx == 1 && dy == -1 -> bodyTurnImages["bottom_left"]
-                                dx == -1 && dy == -1 -> bodyTurnImages["top_left"]
-                                dx == 1 && dy == 1 -> bodyTurnImages["bottom_right"]
-                                dx == -1 && dy == 1 -> bodyTurnImages["top_right"]
-                                else -> headImages[direction]!!
+                            val inferredDirection = when {
+                                dx == 1 -> Direction.LEFT
+                                dx == -1 -> Direction.RIGHT
+                                dy == 1 -> Direction.UP
+                                dy == -1 -> Direction.DOWN
+                                else -> direction
                             }
-
-                            if (headImages != null) {
-
-                                drawImage(
-                                    image = headImages,
-                                    dstOffset = offset,
-                                    dstSize = size
-                                )
-                            }
+                            val headImage = headImages[inferredDirection] ?: headImages[Direction.RIGHT]!!
+                            drawImage(
+                                image = headImage,
+                                dstOffset = offset,
+                                dstSize = size
+                            )
                         }
-
-
-                        snake.lastIndex -> {
+                            snake.lastIndex -> {
                             val prev = snake[index - 1]
                             val dx = x - prev.first
                             val dy = y - prev.second

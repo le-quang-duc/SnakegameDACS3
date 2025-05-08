@@ -41,10 +41,6 @@ fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
         Direction.LEFT to ImageBitmap.imageResource(context.resources, R.drawable.head_left),
         Direction.RIGHT to ImageBitmap.imageResource(context.resources, R.drawable.head_right)
     )
-    val headUp = ImageBitmap.imageResource(context.resources,R.drawable.head_up)
-    val headRight = ImageBitmap.imageResource(context.resources,R.drawable.head_right)
-    val headLeft = ImageBitmap.imageResource(context.resources,R.drawable.head_left)
-    val headDown = ImageBitmap.imageResource(context.resources,R.drawable.head_down)
     val tailImages = mapOf(
         Direction.UP to ImageBitmap.imageResource(context.resources, R.drawable.tail_up),
         Direction.DOWN to ImageBitmap.imageResource(context.resources, R.drawable.tail_down),
@@ -133,26 +129,19 @@ fun lv2(level: String, onBackToHome: () -> Unit, context: Context) {
                             val dx = next?.first?.minus(x) ?: 0
                             val dy = next?.second?.minus(y) ?: 0
 
-                            val headImages = when {
-                                dx==  1 -> headLeft
-                                dx== -1 ->headRight
-                                dy==  1  -> headUp
-                                dy== -1 -> headDown
-                                dx == 1 && dy == -1 -> bodyTurnImages["bottom_left"]
-                                dx == -1 && dy == -1 -> bodyTurnImages["top_left"]
-                                dx == 1 && dy == 1 -> bodyTurnImages["bottom_right"]
-                                dx == -1 && dy == 1 -> bodyTurnImages["top_right"]
-                                else -> headImages[direction]!!
+                            val inferredDirection = when {
+                                dx == 1 -> Direction.LEFT
+                                dx == -1 -> Direction.RIGHT
+                                dy == 1 -> Direction.UP
+                                dy == -1 -> Direction.DOWN
+                                else -> direction
                             }
-
-                            if (headImages != null) {
-
-                                drawImage(
-                                    image = headImages,
-                                    dstOffset = offset,
-                                    dstSize = size
-                                )
-                            }
+                            val headImage = headImages[inferredDirection] ?: headImages[Direction.RIGHT]!!
+                            drawImage(
+                                image = headImage,
+                                dstOffset = offset,
+                                dstSize = size
+                            )
                         }
 
 
